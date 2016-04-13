@@ -93,7 +93,7 @@ sizeWithFont:font constrainedToSize:maxSize lineBreakMode:mode] : CGSizeZero;
 @property (assign ) float margin;
 @end
 
-static const CGFloat kPadding = 4.f;
+//static const CGFloat kPadding = 4.f;
 static const CGFloat kLabelFontSize = 16.f;
 //static const CGFloat kDetailsLabelFontSize = 12.f;
 
