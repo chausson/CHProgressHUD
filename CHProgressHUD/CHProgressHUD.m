@@ -17,14 +17,14 @@ sizeWithAttributes:@{NSFontAttributeName:font}] : CGSizeZero;
 #else
 #define CH_TEXTSIZE(text, font) [text length] > 0 ? [text sizeWithFont:font] : CGSizeZero;
 #endif
-#if __IPHONE_OS_VERSION_MIN_REQUIRED >= 70000
-#define CH_MULTILINE_TEXTSIZE(text, font, maxSize, mode) [text length] > 0 ? [text \
-boundingRectWithSize:maxSize options:(NSStringDrawingUsesLineFragmentOrigin) \
-attributes:@{NSFontAttributeName:font} context:nil].size : CGSizeZero;
-#else
-#define CH_MULTILINE_TEXTSIZE(text, font, maxSize, mode) [text length] > 0 ? [text \
-sizeWithFont:font constrainedToSize:maxSize lineBreakMode:mode] : CGSizeZero;
-#endif
+//#if __IPHONE_OS_VERSION_MIN_REQUIRED >= 70000
+    #define CH_MULTILINE_TEXTSIZE(text, font, maxSize, mode) [text length] > 0 ? [text \
+        boundingRectWithSize:maxSize options:(NSStringDrawingUsesLineFragmentOrigin) \
+        attributes:@{NSFontAttributeName:font} context:nil].size : CGSizeZero;
+//#else
+//    #define CH_MULTILINE_TEXTSIZE(text, font, maxSize, mode) [text length] > 0 ? [text \
+//    sizeWithFont:font constrainedToSize:maxSize lineBreakMode:mode] : CGSizeZero;
+//#endif
 
 #import "CHProgressHUD.h"
 @interface CHProgressHUD () {
@@ -37,7 +37,8 @@ sizeWithFont:font constrainedToSize:maxSize lineBreakMode:mode] : CGSizeZero;
     BOOL isFinished;
     CGAffineTransform rotationTransform;
 }
-
+@property (nonatomic, assign) CGFloat xOffset;
+@property (nonatomic, assign) CGFloat yOffset;
 @property (atomic, strong) UIView *indicator;
 @property (atomic, strong) NSTimer *graceTimer;
 @property (atomic, strong) NSTimer *minShowTimer;
@@ -93,8 +94,8 @@ sizeWithFont:font constrainedToSize:maxSize lineBreakMode:mode] : CGSizeZero;
 @property (assign ) float margin;
 @end
 
-//static const CGFloat kPadding = 4.f;
-static const CGFloat kLabelFontSize = 16.f;
+static const CGFloat kPadding = 4.f;
+static const CGFloat kLabelFontSize = 14.f;
 //static const CGFloat kDetailsLabelFontSize = 12.f;
 
 @implementation CHProgressHUD
@@ -117,8 +118,11 @@ static const CGFloat kLabelFontSize = 16.f;
         self.opacity = 0.8f;
         self.color = nil;
         self.labelFont = [UIFont systemFontOfSize:kLabelFontSize];
+        self.labelColor = [UIColor whiteColor];
         self.cornerRadius = 10.0f;
         self.margin = 20.0f;
+        self.xOffset = 0.0f;
+        self.yOffset = 0.0f;
         self.activityIndicatorColor = [UIColor whiteColor];
         self.opaque = NO;
         self.backgroundColor = [UIColor clearColor];
@@ -143,7 +147,8 @@ static const CGFloat kLabelFontSize = 16.f;
 
 - (void)layoutSubviews {
     [super layoutSubviews];
-    
+    self.xOffset = 0.0f;
+    self.yOffset = 0.0f;
     // Entirely cover the parent view
     UIView *parent = self.superview;
 //    if (!parent) {
@@ -167,47 +172,41 @@ static const CGFloat kLabelFontSize = 16.f;
     if (parent) {
          yPos = self.superview.frame.size.height/2-indicatorF.size.height/2;
     }
-    NSLog(@"%@",NSStringFromCGRect(self.frame));
-    /*
-    yPos = round(((bounds.size.height - totalSize.height) / 2)) + self.margin -indicatorF.size.height/2;
-     y轴位置有问题
-     */
-    
-//    CGSize labelSize = CH_TEXTSIZE(label.text, label.font);
-//    labelSize.width = MIN(labelSize.width, maxWidth);
-//    totalSize.width = MAX(totalSize.width, labelSize.width);
-//    totalSize.height += labelSize.height;
-//    if (labelSize.height > 0.f && indicatorF.size.height > 0.f) {
-//        totalSize.height += kPadding;
-//    }
-//
-//    CGRect labelF;
-//    labelF.origin.y = yPos;
-//    labelF.origin.x = round((bounds.size.width - labelSize.width) / 2) + xPos;
-//    labelF.size = labelSize;
-//    label.frame = labelF;
-//    yPos += labelF.size.height;
-//    if (labelSize.height > 0.f && indicatorF.size.height > 0.f) {
-//        yPos += kPadding;
-//    }
+
     indicatorF.origin.y = yPos;
     indicatorF.origin.x = round((bounds.size.width - indicatorF.size.width) / 2) + xPos;
     self.indicator.frame = indicatorF;
   
-
-
-    
     totalSize.width += 2 * self.margin;
     totalSize.height += 2 * self.margin;
-    
+    if ([self  isNeedShowLabel]) {
+        CGFloat remainingHeight = bounds.size.height - totalSize.height - kPadding - 4 * self.margin;
+        CGSize maxSize = CGSizeMake(maxWidth, remainingHeight);
+        CGSize labelSize = CH_MULTILINE_TEXTSIZE(self.labelText, self.labelFont, maxSize, detailsLabel.lineBreakMode);
+        CGRect labelF;
+        CGFloat labelY;
+        
+        labelF.origin.x = round((bounds.size.width - labelSize.width) / 2) + xPos;
+        labelF.size = labelSize;
+        labelY = CGRectGetMaxY(self.indicator.frame)+kPadding;
+        labelF.origin.y = labelY;
+        label.frame = labelF;
+        _yOffset = labelF.size.height+kPadding;
+        _xOffset = labelF.size.width-totalSize.width+kPadding*8;
+        
+        totalSize.width += _xOffset;
+    }
     self.size = totalSize;
 }
 - (void)updateIndicators {
     [self setNeedsLayout];
     [self setNeedsDisplay];
     [self.indicator removeFromSuperview];
+    [label removeFromSuperview];
+    label = nil;
     switch (self.mode) {
         case CHProgressHUDModeActivityIndicator:{
+      
 
                 self.indicator = [[UIActivityIndicatorView alloc]
                                   initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleWhiteLarge];
@@ -218,24 +217,26 @@ static const CGFloat kLabelFontSize = 16.f;
 
         }
             break;
-        case CHProgressHUDModeCircleView:{
-            
-        }
-            
-            break;
         case CHProgressHUDModeCustomView:{
             self.indicator = self.customView;
             [self addSubview:self.indicator];
         }
             break;
         case CHProgressHUDModeText:{
-     
-            self.indicator= label;
-            [(UILabel *)self.indicator setText:[CHProgressHUD sharedHUD].labelText];
-            [(UILabel *)self.indicator setFont:[CHProgressHUD sharedHUD].labelFont];
-            if ([CHProgressHUD sharedHUD].labelColor) {
-                [(UILabel *)self.indicator setTextColor:[CHProgressHUD sharedHUD].labelColor];
-            }
+            self.indicator = [[UIActivityIndicatorView alloc]
+                              initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleWhiteLarge];
+            [(UIActivityIndicatorView *)self.indicator startAnimating];
+            [(UIActivityIndicatorView *)self.indicator setColor:self.activityIndicatorColor];
+            label = [[UILabel alloc] initWithFrame:self.bounds];
+            label.adjustsFontSizeToFitWidth = NO;
+            label.textAlignment = NSTextAlignmentCenter;
+            label.opaque = NO;
+            label.backgroundColor = [UIColor clearColor];
+            label.textColor = self.labelColor;
+            label.font = self.labelFont;
+            label.text = self.labelText;
+            label.numberOfLines = 2;
+            [self addSubview:label];
             [self addSubview:self.indicator];
         }
             break;
@@ -244,6 +245,8 @@ static const CGFloat kLabelFontSize = 16.f;
         default:
             break;
     }
+
+    
 }
 #pragma mark BG Drawing
 - (void)drawRect:(CGRect)rect{
@@ -259,8 +262,8 @@ static const CGFloat kLabelFontSize = 16.f;
     // Center HUD
     CGRect allRect = self.bounds;
     // Draw rounded HUD backgroud rect
-    CGRect boxRect = CGRectMake(round((allRect.size.width - self.size.width) / 2) ,
-                                round((allRect.size.height - self.size.height) / 2), self.size.width, self.size.height);
+    CGRect boxRect = CGRectMake(round((allRect.size.width - self.size.width) / 2),
+                                round((allRect.size.height - self.size.height) / 2), self.size.width, self.size.height+ self.yOffset);
     float radius = self.cornerRadius;
     CGContextBeginPath(context);
     CGContextMoveToPoint(context, CGRectGetMinX(boxRect) + radius, CGRectGetMinY(boxRect));
@@ -272,6 +275,10 @@ static const CGFloat kLabelFontSize = 16.f;
     CGContextFillPath(context);
     
     UIGraphicsPopContext();
+}
+#pragma mark - Private
+- (BOOL)isNeedShowLabel{
+    return self.mode == CHProgressHUDModeText && self.labelText.length > 0;
 }
 #pragma mark - KVO
 
@@ -368,6 +375,7 @@ completionBlock:(CHProgressHUDCompletionBlock)completion{
         }
         
     }else{
+
         [view addSubview:self];
     }
     [self setNeedsLayout];

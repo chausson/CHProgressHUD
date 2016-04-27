@@ -16,7 +16,7 @@ Pod::Spec.new do |s|
   #
 
   s.name         = "CHProgressHUD"
-  s.version      = "0.0.1"
+  s.version      = "0.0.2"
   s.summary      = "A HUD UIView for ios "
 
   # This description is used to generate tags and improve search results.
@@ -24,7 +24,7 @@ Pod::Spec.new do |s|
   #   * Try to keep it short, snappy and to the point.
   #   * Write the description between the DESC delimiters below.
   #   * Finally, don't worry about the indent, CocoaPods strips it!
-  s.description  = "first commit version 0.0.1"
+  s.description  = "Support Text Mode In Version 0.0.2,also support add to some view which in any controller or window"
   s.homepage     = "https://github.com/chausson/CHProgressHUD.git"
   # s.screenshots  = "www.example.com/screenshots_1.gif", "www.example.com/screenshots_2.gif"
 
@@ -77,7 +77,7 @@ Pod::Spec.new do |s|
   #  Supports git, hg, bzr, svn and HTTP.
   #
 
-  s.source       = { :git => "https://github.com/chausson/CHProgressHUD.git", :tag => "0.0.1" }
+  s.source       = { :git => "https://github.com/chausson/CHProgressHUD.git", :tag => "0.0.2" }
 
 
   # ――― Source Code ―――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――― #

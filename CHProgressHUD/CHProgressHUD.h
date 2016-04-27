@@ -16,12 +16,10 @@
 typedef NS_ENUM(NSInteger, CHProgressHUDMode) {
     /** Progress is shown using an UIActivityIndicatorView. This is the default. */
     CHProgressHUDModeActivityIndicator,
-    /** Shows a circle view */
-    CHProgressHUDModeCircleView,
     /** Shows a custom view */
     CHProgressHUDModeCustomView,
     /** Shows only labels */
-    CHProgressHUDModeText // 暂时不支持
+    CHProgressHUDModeText // 显示文本
 };
 #if NS_BLOCKS_AVAILABLE
 typedef void (^CHProgressHUDCompletionBlock)();
