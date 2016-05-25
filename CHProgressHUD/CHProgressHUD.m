@@ -185,15 +185,21 @@ static const CGFloat kLabelFontSize = 14.f;
         CGSize labelSize = CH_MULTILINE_TEXTSIZE(self.labelText, self.labelFont, maxSize, detailsLabel.lineBreakMode);
         CGRect labelF;
         CGFloat labelY;
-        
+
         labelF.origin.x = round((bounds.size.width - labelSize.width) / 2) + xPos;
         labelF.size = labelSize;
-        labelY = CGRectGetMaxY(self.indicator.frame)+kPadding;
+        if(self.mode == CHProgressHUDModePlainText){
+            labelY = self.center.y;
+            totalSize.height = labelSize.height +2*kPadding;
+        }else{
+            labelY = CGRectGetMaxY(self.indicator.frame)+kPadding;
+        }
+  
         labelF.origin.y = labelY;
         label.frame = labelF;
         _yOffset = labelF.size.height+kPadding;
         _xOffset = labelF.size.width-totalSize.width+kPadding*8;
-        
+
         totalSize.width += _xOffset;
     }
     self.size = totalSize;
@@ -206,14 +212,12 @@ static const CGFloat kLabelFontSize = 14.f;
     label = nil;
     switch (self.mode) {
         case CHProgressHUDModeActivityIndicator:{
-      
-
-                self.indicator = [[UIActivityIndicatorView alloc]
-                                  initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleWhiteLarge];
-                [(UIActivityIndicatorView *)self.indicator startAnimating];
-                [self addSubview:self.indicator];
-                
-                [(UIActivityIndicatorView *)self.indicator setColor:self.activityIndicatorColor];
+    
+            self.indicator = [[UIActivityIndicatorView alloc]
+                              initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleWhiteLarge];
+            [(UIActivityIndicatorView *)self.indicator startAnimating];
+            [self addSubview:self.indicator];
+            [(UIActivityIndicatorView *)self.indicator setColor:self.activityIndicatorColor];
 
         }
             break;
@@ -222,22 +226,18 @@ static const CGFloat kLabelFontSize = 14.f;
             [self addSubview:self.indicator];
         }
             break;
-        case CHProgressHUDModeText:{
+        case CHProgressHUDModeActivityText:{
             self.indicator = [[UIActivityIndicatorView alloc]
                               initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleWhiteLarge];
             [(UIActivityIndicatorView *)self.indicator startAnimating];
             [(UIActivityIndicatorView *)self.indicator setColor:self.activityIndicatorColor];
-            label = [[UILabel alloc] initWithFrame:self.bounds];
-            label.adjustsFontSizeToFitWidth = NO;
-            label.textAlignment = NSTextAlignmentCenter;
-            label.opaque = NO;
-            label.backgroundColor = [UIColor clearColor];
-            label.textColor = self.labelColor;
-            label.font = self.labelFont;
-            label.text = self.labelText;
-            label.numberOfLines = 2;
-            [self addSubview:label];
+      
             [self addSubview:self.indicator];
+            [self initLabel];
+        }
+            break;
+        case CHProgressHUDModePlainText:{
+            [self initLabel];
         }
             break;
             
@@ -247,6 +247,18 @@ static const CGFloat kLabelFontSize = 14.f;
     }
 
     
+}
+- (void)initLabel{
+    label = [[UILabel alloc] initWithFrame:CGRectZero];
+    label.adjustsFontSizeToFitWidth = NO;
+    label.textAlignment = NSTextAlignmentCenter;
+    label.opaque = NO;
+    label.backgroundColor = [UIColor clearColor];
+    label.textColor = self.labelColor;
+    label.font = self.labelFont;
+    label.text = self.labelText;
+    label.numberOfLines = 0;
+    [self addSubview:label];
 }
 #pragma mark BG Drawing
 - (void)drawRect:(CGRect)rect{
@@ -278,7 +290,32 @@ static const CGFloat kLabelFontSize = 14.f;
 }
 #pragma mark - Private
 - (BOOL)isNeedShowLabel{
-    return self.mode == CHProgressHUDModeText && self.labelText.length > 0;
+    return ((self.mode == CHProgressHUDModeActivityText )|| (self.mode == CHProgressHUDModePlainText)) && self.labelText.length > 0;
+}
+- (void)done {
+    isFinished = YES;
+    self.alpha = 0.0f;
+    if (self.mode == CHProgressHUDModeCustomView && [self.customView isKindOfClass:[UIImageView class]]) {
+        [self.indicator.layer removeAllAnimations];
+    }
+    [self removeFromSuperview];
+    if (self.completionBlock) {
+        self.completionBlock();
+        self.completionBlock = NULL;
+    }
+    self.showStarted = nil;
+}
+- (void)didMoveToSuperview{
+    
+    [self updateForCurrentOrientationAnimated:NO];
+}
+- (void)updateForCurrentOrientationAnimated:(BOOL)animated {
+    
+    // Stay in sync with the superview in any case
+    if (self.superview) {
+        self.bounds = self.superview.bounds;
+        [self setNeedsDisplay];
+    }
 }
 #pragma mark - KVO
 
@@ -317,7 +354,7 @@ static const CGFloat kLabelFontSize = 14.f;
     [self setNeedsLayout];
     [self setNeedsDisplay];
 }
-#pragma mark Switch
+#pragma mark Show & Hide
 + (void)showHUDAddedTo:(UIView *)view animated:(BOOL)animated{
      [[CHProgressHUD sharedHUD] show:animated insertView:view];
 }
@@ -332,30 +369,20 @@ static const CGFloat kLabelFontSize = 14.f;
     
     [[CHProgressHUD sharedHUD] show:animated insertView:nil];
 }
-
-+ (void)hide:(BOOL)animated{
-    [[CHProgressHUD sharedHUD] hide:animated];
-}
-
-+ (void)hide:(BOOL)animated afterDelay:(NSTimeInterval)delay
-completionBlock:(CHProgressHUDCompletionBlock)completion{
-    [[CHProgressHUD sharedHUD]  performSelector:@selector(hideDelayed:) withObject:[NSNumber numberWithBool:animated] afterDelay:delay];
-}
 - (void)show:(BOOL)animated insertView:(UIView *)view{
     self.showStarted = [NSDate date];
     if (animated) {
         self.indicator.transform = CGAffineTransformIdentity;
-        if (self.mode == CHProgressHUDModeText  && [self.indicator isKindOfClass:[UILabel class]]) {
-            [(UILabel *)self.indicator setText:[CHProgressHUD sharedHUD].labelText];
-            [(UILabel *)self.indicator setFont:[CHProgressHUD sharedHUD].labelFont];
+        if (self.mode == CHProgressHUDModePlainText  ) {
+            [self hideAfterDelayed:1.5 animation:animated text:self.labelText completionBlock:nil];
         }else  if (self.mode == CHProgressHUDModeCustomView && [self.customView isKindOfClass:[UIImageView class]]) {
             [CHProgressHUD rotate360DegreeWithImageView:(UIImageView *)self.indicator];
         }
         [UIView animateWithDuration:0.3f animations:^{
-               self.alpha = 1.0f;
-           
+            self.alpha = 1.0f;
+            
         } completion:^(BOOL finished) {
-        
+            
         }];
     }
     else {
@@ -375,13 +402,29 @@ completionBlock:(CHProgressHUDCompletionBlock)completion{
         }
         
     }else{
-
+        
         [view addSubview:self];
     }
     [self setNeedsLayout];
     [self setNeedsDisplay];
 }
-- (void)hide:(BOOL)animated{
++ (void)hide:(BOOL)animated{
+    [[CHProgressHUD sharedHUD] hide:@(animated)];
+}
++ (void)hideWithText:(NSString *)text animated:(BOOL)animated{
+    [[CHProgressHUD sharedHUD] hideAfterDelayed:1.0 animation:animated text:text completionBlock:nil];
+}
++ (void)hide:(BOOL)animated text:(NSString *)text
+                      afterDelay:(NSTimeInterval)delay
+                 completionBlock:(CHProgressHUDCompletionBlock)completion{
+        [[CHProgressHUD sharedHUD]  hideAfterDelayed:delay animation:animated text:text completionBlock:completion];
+}
++ (void)hide:(BOOL)animated afterDelay:(NSTimeInterval)delay
+                       completionBlock:(CHProgressHUDCompletionBlock)completion{
+    [[CHProgressHUD sharedHUD]  hideAfterDelayed:delay animation:animated text:nil completionBlock:completion];
+}
+- (void)hide:(NSNumber *)animated{
+
     if (animated && self.showStarted) {
         [UIView animateWithDuration:0.30 animations:^{
             self.transform = CGAffineTransformConcat( self.transform, CGAffineTransformMakeScale(0.5f, 0.5f));
@@ -389,45 +432,31 @@ completionBlock:(CHProgressHUDCompletionBlock)completion{
         } completion:^(BOOL finished) {
             self.transform = CGAffineTransformIdentity;
             [self done];
+         
         }];
     }
     else {
-       self.alpha = 0.0f;
+        self.alpha = 0.0f;
         [self done];
     }
+
 }
-- (void)hideDelayed:(NSNumber *)animated {
-    [[CHProgressHUD  sharedHUD] hide:[animated boolValue]];
+- (void)hideAfterDelayed:(NSTimeInterval )delay
+               animation:(BOOL )animated
+                    text:(NSString *)text
+         completionBlock:(CHProgressHUDCompletionBlock)completion{
+    [CHProgressHUD sharedHUD].completionBlock = completion;
+    if (text != nil && text.length > 0) {
+        self.mode = CHProgressHUDModePlainText;
+        self.labelText = text;
+    }
+    [self  performSelector:@selector(hide:) withObject:[NSNumber numberWithBool:animated] afterDelay:delay];
 }
+
 - (void)animationFinished:(NSString *)animationID finished:(BOOL)finished context:(void*)context {
     [self done];
 }
 
-- (void)done {
-    isFinished = YES;
-    self.alpha = 0.0f;
-    if (self.mode == CHProgressHUDModeCustomView && [self.customView isKindOfClass:[UIImageView class]]) {
-        [self.indicator.layer removeAllAnimations];
-    }
-    [self removeFromSuperview];
-    if (self.completionBlock) {
-        self.completionBlock();
-        self.completionBlock = NULL;
-    }
-    self.showStarted = nil;
-}
-- (void)didMoveToSuperview{
-    
-    [self updateForCurrentOrientationAnimated:NO];
-}
-- (void)updateForCurrentOrientationAnimated:(BOOL)animated {
-
-    // Stay in sync with the superview in any case
-    if (self.superview) {
-        self.bounds = self.superview.bounds;
-        [self setNeedsDisplay];
-    }
-}
 #pragma mark Catagetory
 + (UIImageView *)rotate360DegreeWithImageView:(__kindof UIImageView *)imageView{
     if ( [CHProgressHUD sharedHUD].animation) {

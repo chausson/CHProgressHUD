@@ -7,10 +7,6 @@
 //
 #import "SVProgressHUD.h"
 #import "MBProgressHUD.h"
-
-
-
-
 #import "ViewController.h"
 #import "CHProgressHUD.h"
 @interface ViewController ()
@@ -25,21 +21,20 @@
 
 - (void)viewDidLoad {
     [super viewDidLoad];
-    MBProgressHUD* progressHud = [MBProgressHUD showHUDAddedTo: self.bottomView animated: TRUE];
-				[progressHud setRemoveFromSuperViewOnHide: TRUE];
-    progressHud.labelText = @"登录中，请稍等";
-    mbHud = progressHud;
-    
+
     self.view.backgroundColor = [UIColor whiteColor];
     
 }
 - (IBAction)changed:(UIButton *)sender {
     [CHProgressHUD setLabelText:@"登录中，请稍等"];
-    [CHProgressHUD setMode:CHProgressHUDModeText];
+    [CHProgressHUD setMode:CHProgressHUDModeActivityText];
     [CHProgressHUD showHUDAddedTo:self.topView animated:YES];
  //   [CHProgressHUD hide:YES afterDelay:2.0f completionBlock:nil];
+ //   [self  performSelector:@selector(hideDelayed) withObject:nil afterDelay:2];
 
-    [mbHud show:YES];
+}
+- (void)hideDelayed{
+    [CHProgressHUD hideWithText:@"手机密码错误" animated:YES];
 }
 - (IBAction)hide:(UIButton *)sender {
     UIImageView *image = [[UIImageView alloc]initWithFrame:CGRectMake(0, 0, 60, 60)];
@@ -47,7 +42,9 @@
     [CHProgressHUD setCustomView:image];
     [CHProgressHUD setMode:CHProgressHUDModeCustomView];
     [CHProgressHUD show:YES];
-    [CHProgressHUD hide:YES afterDelay:2.0f completionBlock:nil];
+    [CHProgressHUD hide:YES afterDelay:2.0f completionBlock:^{
+        NSLog(@"image dismiss after 2.0");
+    }];
 
 }
 - (void)dismiss{

@@ -19,7 +19,9 @@ typedef NS_ENUM(NSInteger, CHProgressHUDMode) {
     /** Shows a custom view */
     CHProgressHUDModeCustomView,
     /** Shows only labels */
-    CHProgressHUDModeText // 显示文本
+    CHProgressHUDModeActivityText, // 显示文本和菊花
+    CHProgressHUDModePlainText// 显示纯文本
+    
 };
 #if NS_BLOCKS_AVAILABLE
 typedef void (^CHProgressHUDCompletionBlock)();
@@ -36,6 +38,13 @@ typedef void (^CHProgressHUDCompletionBlock)();
 
 + (void)hide:(BOOL)animated afterDelay:(NSTimeInterval)delay
                             completionBlock:(CHProgressHUDCompletionBlock)completion;
+
++ (void)hideWithText:(NSString *)text animated:(BOOL)animated;
+
++ (void)hide:(BOOL)animated text:(NSString *)text
+                            afterDelay:(NSTimeInterval)delay
+                            completionBlock:(CHProgressHUDCompletionBlock)completion;
+
 /**
  * Please use CHProgressHUD Method Setup CutomView , it is only support one customView.
  */
