@@ -16,7 +16,7 @@ Pod::Spec.new do |s|
   #
 
   s.name         = "CHProgressHUD"
-  s.version      = "0.1.1"
+  s.version      = "0.1.3"
   s.summary      = "A HUD UIView for ios "
 
   # This description is used to generate tags and improve search results.
@@ -77,8 +77,7 @@ Pod::Spec.new do |s|
   #  Supports git, hg, bzr, svn and HTTP.
   #
 
-  s.source       = { :git => "https://github.com/chausson/CHProgressHUD.git", :tag => "0.1.1" }
-
+  s.source       = { :git => "https://github.com/chausson/CHProgressHUD.git", :tag => "0.1.3" }
   # ――― Source Code ―――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――― #
   #
   #  CocoaPods is smart about how it includes source code. For source files
