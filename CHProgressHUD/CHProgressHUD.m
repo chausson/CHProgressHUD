@@ -39,10 +39,12 @@ sizeWithAttributes:@{NSFontAttributeName:font}] : CGSizeZero;
 }
 @property (nonatomic, assign) CGFloat xOffset;
 @property (nonatomic, assign) CGFloat yOffset;
+@property (nonatomic, assign) NSTimeInterval textDuration;
 @property (atomic, strong) UIView *indicator;
 @property (atomic, strong) NSTimer *graceTimer;
 @property (atomic, strong) NSTimer *minShowTimer;
 @property (atomic, strong) NSDate *showStarted;
+
 /**
  *  The default View to be shown is Activity
  *
@@ -123,6 +125,7 @@ static const CGFloat kLabelFontSize = 14.f;
         self.margin = 20.0f;
         self.xOffset = 0.0f;
         self.yOffset = 0.0f;
+        self.textDuration = 1.5;
         self.activityIndicatorColor = [UIColor whiteColor];
         self.opaque = NO;
         self.backgroundColor = [UIColor clearColor];
@@ -295,6 +298,7 @@ static const CGFloat kLabelFontSize = 14.f;
 - (void)done {
     isFinished = YES;
     self.alpha = 0.0f;
+    self.labelText = nil;
     if (self.mode == CHProgressHUDModeCustomView && [self.customView isKindOfClass:[UIImageView class]]) {
         [self.indicator.layer removeAllAnimations];
     }
@@ -369,12 +373,20 @@ static const CGFloat kLabelFontSize = 14.f;
     
     [[CHProgressHUD sharedHUD] show:animated insertView:nil];
 }
++ (void)showPlainText:(NSString *)text{
+    [[CHProgressHUD sharedHUD] setMode:CHProgressHUDModePlainText];
+    [[CHProgressHUD sharedHUD] setLabelText:text];
+    [[CHProgressHUD sharedHUD] show:YES insertView:nil];
+}
 - (void)show:(BOOL)animated insertView:(UIView *)view{
     self.showStarted = [NSDate date];
+    if (self.labelText.length == 0 && self.mode != CHProgressHUDModeCustomView) {
+        self.mode = CHProgressHUDModeActivityIndicator;
+    }
     if (animated) {
         self.indicator.transform = CGAffineTransformIdentity;
-        if (self.mode == CHProgressHUDModePlainText  ) {
-            [self hideAfterDelayed:1.5 animation:animated text:self.labelText completionBlock:nil];
+        if (self.mode == CHProgressHUDModePlainText) {
+            [self hideAfterDelayed:self.textDuration animation:animated text:self.labelText completionBlock:nil];
         }else  if (self.mode == CHProgressHUDModeCustomView && [self.customView isKindOfClass:[UIImageView class]]) {
             [CHProgressHUD rotate360DegreeWithImageView:(UIImageView *)self.indicator];
         }
@@ -412,7 +424,7 @@ static const CGFloat kLabelFontSize = 14.f;
     [[CHProgressHUD sharedHUD] hide:@(animated)];
 }
 + (void)hideWithText:(NSString *)text animated:(BOOL)animated{
-    [[CHProgressHUD sharedHUD] hideAfterDelayed:1.0 animation:animated text:text completionBlock:nil];
+    [[CHProgressHUD sharedHUD] hideAfterDelayed:[CHProgressHUD sharedHUD].textDuration animation:animated text:text completionBlock:nil];
 }
 + (void)hide:(BOOL)animated text:(NSString *)text
                       afterDelay:(NSTimeInterval)delay
@@ -517,6 +529,9 @@ static const CGFloat kLabelFontSize = 14.f;
 }
 + (void)setLabelText:(NSString *)labelText{
     [CHProgressHUD sharedHUD].labelText = labelText;
+}
++ (void)setTextDuration:(NSTimeInterval )time{
+    [CHProgressHUD sharedHUD].textDuration = time;
 }
 - (void)dealloc{
     [self unregisterFromKVO];

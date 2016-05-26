@@ -27,12 +27,16 @@ typedef NS_ENUM(NSInteger, CHProgressHUDMode) {
 typedef void (^CHProgressHUDCompletionBlock)();
 #endif
 @interface CHProgressHUD : UIView
+/**
+ * Quick use hud with mode and parameters only CHProgressHUDModeActivityText and CHProgressHUDModePlainText needs text
+ */
++ (void)showPlainText:(NSString *)text;
 
 + (void)showHUDAddedTo:(UIView *)view animated:(BOOL)animated;
 
 + (void)showAnimated:(BOOL)animated completionBlock:(CHProgressHUDCompletionBlock)completion;
 
-+ (void)show:(BOOL)animated;
++ (void)show:(BOOL)animated; // show HUD if labelText is not nil mode will be set CHProgressHUDModeActivityText
 
 + (void)hide:(BOOL)animated;
 
@@ -82,6 +86,10 @@ typedef void (^CHProgressHUDCompletionBlock)();
  * The  defults line is 2.
  */
 + (void)setLabelText:(NSString *)labelText;
+/**
+ * the Label DurationTime defult is 1.5
+ */
++ (void)setTextDuration:(NSTimeInterval )time;
 /**
  * The  defults margin is 20.0f.deprecated on this version
  */
