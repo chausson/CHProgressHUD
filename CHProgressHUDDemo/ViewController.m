@@ -26,11 +26,15 @@
     
 }
 - (IBAction)changed:(UIButton *)sender {
+    
+//    [CHProgressHUD  show:YES];
+//    [CHProgressHUD hide:YES];
+    
     [CHProgressHUD setLabelText:@"登录中，请稍等"];
     [CHProgressHUD setMode:CHProgressHUDModeActivityText];
     [CHProgressHUD showHUDAddedTo:self.topView animated:YES];
- //   [CHProgressHUD hide:YES afterDelay:2.0f completionBlock:nil];
- //   [self  performSelector:@selector(hideDelayed) withObject:nil afterDelay:2];
+  //  [CHProgressHUD hide:YES afterDelay:2.0f completionBlock:nil];
+    [self  performSelector:@selector(hideDelayed) withObject:nil afterDelay:2];
 
 }
 - (void)hideDelayed{

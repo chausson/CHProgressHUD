@@ -51,11 +51,16 @@ sizeWithAttributes:@{NSFontAttributeName:font}] : CGSizeZero;
  * @see CHProgressHUDMode
  */
 @property (assign) CHProgressHUDMode mode;
-
+/**
+ * The minimum time (in seconds) that the HUD is shown.
+ * This avoids the problem of the HUD being shown and than instantly hidden.
+ * Defaults to 0 (no minimum show time).
+ */
+@property (assign) float minShowTime;
 /**
  * The UIView (e.g., a UIImageView) to be shown when the HUD is in CHProgressHUDModeCustomView.
  */
-@property (strong ) UIView *customView;
+@property (strong,atomic ) UIView *customView;
 
 /**
  * An optional short message to be displayed below the activity indicator. The HUD is automatically resized to fit
@@ -117,6 +122,7 @@ static const CGFloat kLabelFontSize = 14.f;
 {
     self = [super initWithFrame:frame];
     if (self) {
+        self.minShowTime = 0.35f;
         self.opacity = 0.8f;
         self.color = nil;
         self.labelFont = [UIFont systemFontOfSize:kLabelFontSize];
@@ -150,62 +156,65 @@ static const CGFloat kLabelFontSize = 14.f;
 
 - (void)layoutSubviews {
     [super layoutSubviews];
-    self.xOffset = 0.0f;
-    self.yOffset = 0.0f;
-    // Entirely cover the parent view
-    UIView *parent = self.superview;
-//    if (!parent) {
+//    if (!isFinished && self.showStarted) {
+        self.xOffset = 0.0f;
+        self.yOffset = 0.0f;
+        // Entirely cover the parent view
+        UIView *parent = self.superview;
+        //    if (!parent) {
         self.frame =  parent.bounds;
-//    }
-    CGRect bounds = self.bounds;
-    
-    // Determine the total width and height needed
-    CGFloat maxWidth = bounds.size.width - 4 * self.margin;
-    CGSize totalSize = CGSizeZero;
-    
-    
-    CGRect indicatorF = self.indicator.bounds;
-    indicatorF.size.width = MIN(indicatorF.size.width, maxWidth);
-    totalSize.width = MAX(totalSize.width, indicatorF.size.width);
-    totalSize.height += indicatorF.size.height;
-    // Position elements
-    CGFloat yPos = 0.0f;
-    CGFloat xPos = 0.0f;
-    yPos = self.center.y-indicatorF.size.height/2;
-    if (parent) {
-         yPos = self.superview.frame.size.height/2-indicatorF.size.height/2;
-    }
-
-    indicatorF.origin.y = yPos;
-    indicatorF.origin.x = round((bounds.size.width - indicatorF.size.width) / 2) + xPos;
-    self.indicator.frame = indicatorF;
-  
-    totalSize.width += 2 * self.margin;
-    totalSize.height += 2 * self.margin;
-    if ([self  isNeedShowLabel]) {
-        CGFloat remainingHeight = bounds.size.height - totalSize.height - kPadding - 4 * self.margin;
-        CGSize maxSize = CGSizeMake(maxWidth, remainingHeight);
-        CGSize labelSize = CH_MULTILINE_TEXTSIZE(self.labelText, self.labelFont, maxSize, detailsLabel.lineBreakMode);
-        CGRect labelF;
-        CGFloat labelY;
-
-        labelF.origin.x = round((bounds.size.width - labelSize.width) / 2) + xPos;
-        labelF.size = labelSize;
-        if(self.mode == CHProgressHUDModePlainText){
-            labelY = self.center.y;
-            totalSize.height = labelSize.height +2*kPadding;
-        }else{
-            labelY = CGRectGetMaxY(self.indicator.frame)+kPadding;
+        //    }
+        CGRect bounds = self.bounds;
+        
+        // Determine the total width and height needed
+        CGFloat maxWidth = bounds.size.width - 4 * self.margin;
+        CGSize totalSize = CGSizeZero;
+        
+        
+        CGRect indicatorF = self.indicator.bounds;
+        indicatorF.size.width = MIN(indicatorF.size.width, maxWidth);
+        totalSize.width = MAX(totalSize.width, indicatorF.size.width);
+        totalSize.height += indicatorF.size.height;
+        // Position elements
+        CGFloat yPos = 0.0f;
+        CGFloat xPos = 0.0f;
+        yPos = self.center.y-indicatorF.size.height/2;
+        if (parent) {
+            yPos = self.superview.frame.size.height/2-indicatorF.size.height/2;
         }
+        
+        indicatorF.origin.y = yPos;
+        indicatorF.origin.x = round((bounds.size.width - indicatorF.size.width) / 2) + xPos;
+        self.indicator.frame = indicatorF;
+        
+        totalSize.width += 2 * self.margin;
+        totalSize.height += 2 * self.margin;
+        if ([self  isNeedShowLabel]) {
+            CGFloat remainingHeight = bounds.size.height - totalSize.height - kPadding - 4 * self.margin;
+            CGSize maxSize = CGSizeMake(maxWidth, remainingHeight);
+            CGSize labelSize = CH_MULTILINE_TEXTSIZE(self.labelText, self.labelFont, maxSize, detailsLabel.lineBreakMode);
+            CGRect labelF;
+            CGFloat labelY;
+            
+            labelF.origin.x = round((bounds.size.width - labelSize.width) / 2) + xPos;
+            labelF.size = labelSize;
+            if(self.mode == CHProgressHUDModePlainText){
+                labelY = self.center.y;
+                totalSize.height = labelSize.height +2*kPadding;
+            }else{
+                labelY = CGRectGetMaxY(self.indicator.frame)+kPadding;
+            }
+            
+            labelF.origin.y = labelY;
+            label.frame = labelF;
+            _yOffset = labelF.size.height+kPadding;
+            _xOffset = labelF.size.width-totalSize.width+kPadding*8;
+            
+            totalSize.width += _xOffset;
+        }
+        self.size = totalSize;
+//    }
   
-        labelF.origin.y = labelY;
-        label.frame = labelF;
-        _yOffset = labelF.size.height+kPadding;
-        _xOffset = labelF.size.width-totalSize.width+kPadding*8;
-
-        totalSize.width += _xOffset;
-    }
-    self.size = totalSize;
 }
 - (void)updateIndicators {
     [self setNeedsLayout];
@@ -213,41 +222,46 @@ static const CGFloat kLabelFontSize = 14.f;
     [self.indicator removeFromSuperview];
     [label removeFromSuperview];
     label = nil;
-    switch (self.mode) {
-        case CHProgressHUDModeActivityIndicator:{
     
-            self.indicator = [[UIActivityIndicatorView alloc]
-                              initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleWhiteLarge];
-            [(UIActivityIndicatorView *)self.indicator startAnimating];
-            [self addSubview:self.indicator];
-            [(UIActivityIndicatorView *)self.indicator setColor:self.activityIndicatorColor];
-
+//    if (!isFinished && self.showStarted) {
+        switch (self.mode) {
+            case CHProgressHUDModeActivityIndicator:{
+                
+                self.indicator = [[UIActivityIndicatorView alloc]
+                                  initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleWhiteLarge];
+                [(UIActivityIndicatorView *)self.indicator startAnimating];
+                [self addSubview:self.indicator];
+                [(UIActivityIndicatorView *)self.indicator setColor:self.activityIndicatorColor];
+                
+            }
+                break;
+            case CHProgressHUDModeCustomView:{
+                self.indicator = self.customView;
+                [self addSubview:self.indicator];
+            }
+                break;
+            case CHProgressHUDModeActivityText:{
+                self.indicator = [[UIActivityIndicatorView alloc]
+                                  initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleWhiteLarge];
+                [(UIActivityIndicatorView *)self.indicator startAnimating];
+                [(UIActivityIndicatorView *)self.indicator setColor:self.activityIndicatorColor];
+                
+                [self addSubview:self.indicator];
+                [self initLabel];
+            }
+                break;
+            case CHProgressHUDModePlainText:{
+                [self initLabel];
+            }
+                break;
+                
+                
+            default:
+                break;
         }
-            break;
-        case CHProgressHUDModeCustomView:{
-            self.indicator = self.customView;
-            [self addSubview:self.indicator];
-        }
-            break;
-        case CHProgressHUDModeActivityText:{
-            self.indicator = [[UIActivityIndicatorView alloc]
-                              initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleWhiteLarge];
-            [(UIActivityIndicatorView *)self.indicator startAnimating];
-            [(UIActivityIndicatorView *)self.indicator setColor:self.activityIndicatorColor];
-      
-            [self addSubview:self.indicator];
-            [self initLabel];
-        }
-            break;
-        case CHProgressHUDModePlainText:{
-            [self initLabel];
-        }
-            break;
-            
-            
-        default:
-            break;
-    }
+        
+        
+//    }
 
     
 }
@@ -265,49 +279,56 @@ static const CGFloat kLabelFontSize = 14.f;
 }
 #pragma mark BG Drawing
 - (void)drawRect:(CGRect)rect{
-    CGContextRef context = UIGraphicsGetCurrentContext();
-    UIGraphicsPushContext(context);
+        CGContextRef context = UIGraphicsGetCurrentContext();
+        UIGraphicsPushContext(context);
+        
+        // Set background rect color
+        if (self.color) {
+            CGContextSetFillColorWithColor(context, self.color.CGColor);
+        } else {
+            CGContextSetGrayFillColor(context, 0.0f, self.opacity);
+        }
+        // Center HUD
+        CGRect allRect = self.bounds;
+        // Draw rounded HUD backgroud rect
+        CGRect boxRect = CGRectMake(round((allRect.size.width - self.size.width) / 2),
+                                    round((allRect.size.height - self.size.height) / 2), self.size.width, self.size.height+ self.yOffset);
+        float radius = self.cornerRadius;
+        CGContextBeginPath(context);
+        CGContextMoveToPoint(context, CGRectGetMinX(boxRect) + radius, CGRectGetMinY(boxRect));
+        CGContextAddArc(context, CGRectGetMaxX(boxRect) - radius, CGRectGetMinY(boxRect) + radius, radius, 3 * (float)M_PI / 2, 0, 0);
+        CGContextAddArc(context, CGRectGetMaxX(boxRect) - radius, CGRectGetMaxY(boxRect) - radius, radius, 0, (float)M_PI / 2, 0);
+        CGContextAddArc(context, CGRectGetMinX(boxRect) + radius, CGRectGetMaxY(boxRect) - radius, radius, (float)M_PI / 2, (float)M_PI, 0);
+        CGContextAddArc(context, CGRectGetMinX(boxRect) + radius, CGRectGetMinY(boxRect) + radius, radius, (float)M_PI, 3 * (float)M_PI / 2, 0);
+        CGContextClosePath(context);
+        CGContextFillPath(context);
+        
+        UIGraphicsPopContext();
 
-    // Set background rect color
-    if (self.color) {
-        CGContextSetFillColorWithColor(context, self.color.CGColor);
-    } else {
-        CGContextSetGrayFillColor(context, 0.0f, self.opacity);
-    }
-    // Center HUD
-    CGRect allRect = self.bounds;
-    // Draw rounded HUD backgroud rect
-    CGRect boxRect = CGRectMake(round((allRect.size.width - self.size.width) / 2),
-                                round((allRect.size.height - self.size.height) / 2), self.size.width, self.size.height+ self.yOffset);
-    float radius = self.cornerRadius;
-    CGContextBeginPath(context);
-    CGContextMoveToPoint(context, CGRectGetMinX(boxRect) + radius, CGRectGetMinY(boxRect));
-    CGContextAddArc(context, CGRectGetMaxX(boxRect) - radius, CGRectGetMinY(boxRect) + radius, radius, 3 * (float)M_PI / 2, 0, 0);
-    CGContextAddArc(context, CGRectGetMaxX(boxRect) - radius, CGRectGetMaxY(boxRect) - radius, radius, 0, (float)M_PI / 2, 0);
-    CGContextAddArc(context, CGRectGetMinX(boxRect) + radius, CGRectGetMaxY(boxRect) - radius, radius, (float)M_PI / 2, (float)M_PI, 0);
-    CGContextAddArc(context, CGRectGetMinX(boxRect) + radius, CGRectGetMinY(boxRect) + radius, radius, (float)M_PI, 3 * (float)M_PI / 2, 0);
-    CGContextClosePath(context);
-    CGContextFillPath(context);
-    
-    UIGraphicsPopContext();
 }
 #pragma mark - Private
 - (BOOL)isNeedShowLabel{
     return ((self.mode == CHProgressHUDModeActivityText )|| (self.mode == CHProgressHUDModePlainText)) && self.labelText.length > 0;
 }
 - (void)done {
-    isFinished = YES;
-    self.alpha = 0.0f;
-    self.labelText = nil;
-    if (self.mode == CHProgressHUDModeCustomView && [self.customView isKindOfClass:[UIImageView class]]) {
-        [self.indicator.layer removeAllAnimations];
-    }
-    [self removeFromSuperview];
+
+    [self clear];
     if (self.completionBlock) {
         self.completionBlock();
         self.completionBlock = NULL;
     }
+
+}
+- (void)clear{
+    isFinished = YES;
+    self.alpha = 0.0f;
+    self.labelText = nil;
+    self.minShowTimer = nil;
     self.showStarted = nil;
+    if (self.mode == CHProgressHUDModeCustomView && [self.customView isKindOfClass:[UIImageView class]]) {
+        [self.indicator.layer removeAllAnimations];
+    }
+    [self removeFromSuperview];
 }
 - (void)didMoveToSuperview{
     
@@ -380,6 +401,11 @@ static const CGFloat kLabelFontSize = 14.f;
 }
 - (void)show:(BOOL)animated insertView:(UIView *)view{
     self.showStarted = [NSDate date];
+    if (self.minShowTimer) {
+        [self.minShowTimer invalidate];
+    }
+    
+    isFinished = NO;
     if (self.labelText.length == 0 && self.mode != CHProgressHUDModeCustomView) {
         self.mode = CHProgressHUDModeActivityIndicator;
     }
@@ -435,36 +461,56 @@ static const CGFloat kLabelFontSize = 14.f;
                        completionBlock:(CHProgressHUDCompletionBlock)completion{
     [[CHProgressHUD sharedHUD]  hideAfterDelayed:delay animation:animated text:nil completionBlock:completion];
 }
-- (void)hide:(NSNumber *)animated{
 
-    if (animated && self.showStarted) {
-        [UIView animateWithDuration:0.30 animations:^{
-            self.transform = CGAffineTransformConcat( self.transform, CGAffineTransformMakeScale(0.5f, 0.5f));
-            self.alpha = 0.02f;
-        } completion:^(BOOL finished) {
-            self.transform = CGAffineTransformIdentity;
-            [self done];
-         
-        }];
-    }
-    else {
-        self.alpha = 0.0f;
-        [self done];
-    }
-
-}
 - (void)hideAfterDelayed:(NSTimeInterval )delay
                animation:(BOOL )animated
                     text:(NSString *)text
          completionBlock:(CHProgressHUDCompletionBlock)completion{
+    if (self.graceTimer) {
+        [self.graceTimer invalidate];
+    }
     [CHProgressHUD sharedHUD].completionBlock = completion;
     if (text != nil && text.length > 0) {
         self.mode = CHProgressHUDModePlainText;
         self.labelText = text;
     }
-    [self  performSelector:@selector(hide:) withObject:[NSNumber numberWithBool:animated] afterDelay:delay];
+    SEL hidden = animated?NSSelectorFromString(@"hiddenWithAnimation"):NSSelectorFromString(@"hiddenWithOutAnimation");
+    self.graceTimer = [NSTimer scheduledTimerWithTimeInterval:delay target:self
+                                                       selector:hidden userInfo:nil repeats:NO];
+  //  [self  performSelector:hidden withObject:nil afterDelay:delay];
 }
-
+- (void)hide:(NSNumber *)animated{
+    
+    if (animated && self.showStarted) {
+        if (self.minShowTime > 0.0 ) {
+            NSTimeInterval interv = [[NSDate date] timeIntervalSinceDate:self.showStarted];
+            if (interv < self.minShowTime) {
+                self.minShowTimer = [NSTimer scheduledTimerWithTimeInterval:(self.minShowTime - interv) target:self
+                                                                   selector:@selector(hiddenWithAnimation) userInfo:nil repeats:NO];
+                return;
+            }
+        }
+        
+    }
+    else if(self.showStarted){
+        [self hiddenWithOutAnimation];
+    }
+    
+}
+- (void)hiddenWithOutAnimation{
+    self.alpha = 0.0f;
+    [self done];
+}
+- (void)hiddenWithAnimation{
+    [UIView animateWithDuration:0.30 animations:^{
+        self.transform = CGAffineTransformConcat( self.transform, CGAffineTransformMakeScale(0.5f, 0.5f));
+        self.alpha = 0.02f;
+    } completion:^(BOOL finished) {
+        self.transform = CGAffineTransformIdentity;
+        [self done];
+        
+    }];
+}
 - (void)animationFinished:(NSString *)animationID finished:(BOOL)finished context:(void*)context {
     [self done];
 }
