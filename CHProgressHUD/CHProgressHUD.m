@@ -323,6 +323,7 @@ static const CGFloat kLabelFontSize = 14.f;
     isFinished = YES;
     self.alpha = 0.0f;
     self.labelText = nil;
+    self.graceTimer = nil;
     self.minShowTimer = nil;
     self.showStarted = nil;
     if (self.mode == CHProgressHUDModeCustomView && [self.customView isKindOfClass:[UIImageView class]]) {
@@ -487,6 +488,9 @@ static const CGFloat kLabelFontSize = 14.f;
             if (interv < self.minShowTime) {
                 self.minShowTimer = [NSTimer scheduledTimerWithTimeInterval:(self.minShowTime - interv) target:self
                                                                    selector:@selector(hiddenWithAnimation) userInfo:nil repeats:NO];
+                return;
+            }else{
+                [self hiddenWithAnimation];
                 return;
             }
         }
