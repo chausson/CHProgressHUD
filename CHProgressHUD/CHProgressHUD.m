@@ -58,7 +58,7 @@ sizeWithAttributes:@{NSFontAttributeName:font}] : CGSizeZero;
  */
 @property (assign) float minShowTime;
 /**
- * The UIView (e.g., a UIImageView) to be shown when the HUD is in CHProgressHUDModeCustomView.
+ * The UIView (e.g., a UIImageView) to be shown when the HUD is in CHCustomView.
  */
 @property (strong,atomic ) UIView *customView;
 
@@ -198,7 +198,7 @@ static const CGFloat kLabelFontSize = 14.f;
             
             labelF.origin.x = round((bounds.size.width - labelSize.width) / 2) + xPos;
             labelF.size = labelSize;
-            if(self.mode == CHProgressHUDModePlainText){
+            if(self.mode == CHPlainText){
                 labelY = self.center.y;
                 totalSize.height = labelSize.height +2*kPadding;
             }else{
@@ -224,8 +224,9 @@ static const CGFloat kLabelFontSize = 14.f;
     label = nil;
     
 //    if (!isFinished && self.showStarted) {
+
         switch (self.mode) {
-            case CHProgressHUDModeActivityIndicator:{
+            case CHActivityIndicator:{
                 
                 self.indicator = [[UIActivityIndicatorView alloc]
                                   initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleWhiteLarge];
@@ -235,12 +236,17 @@ static const CGFloat kLabelFontSize = 14.f;
                 
             }
                 break;
-            case CHProgressHUDModeCustomView:{
+            case CHCustomView:{
                 self.indicator = self.customView;
                 [self addSubview:self.indicator];
             }
                 break;
-            case CHProgressHUDModeActivityText:{
+            case CHRotateCustomView:{
+                self.indicator = self.customView;
+                [self addSubview:self.indicator];
+            }
+                break;
+            case CHActivityText:{
                 self.indicator = [[UIActivityIndicatorView alloc]
                                   initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleWhiteLarge];
                 [(UIActivityIndicatorView *)self.indicator startAnimating];
@@ -250,8 +256,10 @@ static const CGFloat kLabelFontSize = 14.f;
                 [self initLabel];
             }
                 break;
-            case CHProgressHUDModePlainText:{
+            case CHPlainText:{
                 [self initLabel];
+                self.userInteractionEnabled = NO;
+    
             }
                 break;
                 
@@ -279,6 +287,7 @@ static const CGFloat kLabelFontSize = 14.f;
 }
 #pragma mark BG Drawing
 - (void)drawRect:(CGRect)rect{
+    if (self.mode != CHRotateCustomView && self.mode != CHCustomView) {
         CGContextRef context = UIGraphicsGetCurrentContext();
         UIGraphicsPushContext(context);
         
@@ -302,13 +311,14 @@ static const CGFloat kLabelFontSize = 14.f;
         CGContextAddArc(context, CGRectGetMinX(boxRect) + radius, CGRectGetMinY(boxRect) + radius, radius, (float)M_PI, 3 * (float)M_PI / 2, 0);
         CGContextClosePath(context);
         CGContextFillPath(context);
-        
         UIGraphicsPopContext();
+    }
+
 
 }
 #pragma mark - Private
 - (BOOL)isNeedShowLabel{
-    return ((self.mode == CHProgressHUDModeActivityText )|| (self.mode == CHProgressHUDModePlainText)) && self.labelText.length > 0;
+    return ((self.mode == CHActivityText )|| (self.mode == CHPlainText)) && self.labelText.length > 0;
 }
 - (void)done {
 
@@ -320,13 +330,14 @@ static const CGFloat kLabelFontSize = 14.f;
 
 }
 - (void)clear{
+    self.userInteractionEnabled = YES;
     isFinished = YES;
     self.alpha = 0.0f;
     self.labelText = nil;
     self.graceTimer = nil;
     self.minShowTimer = nil;
     self.showStarted = nil;
-    if (self.mode == CHProgressHUDModeCustomView && [self.customView isKindOfClass:[UIImageView class]]) {
+    if (self.mode == CHRotateCustomView) {
         [self.indicator.layer removeAllAnimations];
     }
     [self removeFromSuperview];
@@ -396,7 +407,7 @@ static const CGFloat kLabelFontSize = 14.f;
     [[CHProgressHUD sharedHUD] show:animated insertView:nil];
 }
 + (void)showPlainText:(NSString *)text{
-    [[CHProgressHUD sharedHUD] setMode:CHProgressHUDModePlainText];
+    [[CHProgressHUD sharedHUD] setMode:CHPlainText];
     [[CHProgressHUD sharedHUD] setLabelText:text];
     [[CHProgressHUD sharedHUD] show:YES insertView:nil];
 }
@@ -407,15 +418,15 @@ static const CGFloat kLabelFontSize = 14.f;
     }
     
     isFinished = NO;
-    if (self.labelText.length == 0 && self.mode != CHProgressHUDModeCustomView) {
-        self.mode = CHProgressHUDModeActivityIndicator;
+    if (self.labelText.length == 0 && self.mode != CHCustomView && self.mode != CHRotateCustomView) {
+        self.mode = CHActivityIndicator;
     }
     if (animated) {
         self.indicator.transform = CGAffineTransformIdentity;
-        if (self.mode == CHProgressHUDModePlainText) {
+        if (self.mode == CHPlainText) {
             [self hideAfterDelayed:self.textDuration animation:animated text:self.labelText completionBlock:nil];
-        }else  if (self.mode == CHProgressHUDModeCustomView && [self.customView isKindOfClass:[UIImageView class]]) {
-            [CHProgressHUD rotate360DegreeWithImageView:(UIImageView *)self.indicator];
+        }else  if (self.mode == CHRotateCustomView ) {
+            [CHProgressHUD rotate360DegreeWithImageView:(UIView *)self.indicator];
         }
         [UIView animateWithDuration:0.3f animations:^{
             self.alpha = 1.0f;
@@ -472,7 +483,7 @@ static const CGFloat kLabelFontSize = 14.f;
     }
     [CHProgressHUD sharedHUD].completionBlock = completion;
     if (text != nil && text.length > 0) {
-        self.mode = CHProgressHUDModePlainText;
+        self.mode = CHPlainText;
         self.labelText = text;
     }
     SEL hidden = animated?NSSelectorFromString(@"hiddenWithAnimation"):NSSelectorFromString(@"hiddenWithOutAnimation");
@@ -520,9 +531,9 @@ static const CGFloat kLabelFontSize = 14.f;
 }
 
 #pragma mark Catagetory
-+ (UIImageView *)rotate360DegreeWithImageView:(__kindof UIImageView *)imageView{
++ (UIImageView *)rotate360DegreeWithImageView:(__kindof UIView *)view{
     if ( [CHProgressHUD sharedHUD].animation) {
-        [imageView.layer addAnimation: [CHProgressHUD sharedHUD].animation forKey:nil];
+        [view.layer addAnimation: [CHProgressHUD sharedHUD].animation forKey:nil];
     }else{
         CABasicAnimation *animation = [ CABasicAnimation
                                        animationWithKeyPath:@"transform"];
@@ -537,16 +548,20 @@ static const CGFloat kLabelFontSize = 14.f;
         animation.cumulative = YES;
         animation.repeatCount = 1000;
         //在图片边缘添加一个像素的透明区域
-        CGRect imageRrect = CGRectMake(0, 0,imageView.frame.size.width, imageView.frame.size.height);
-        UIGraphicsBeginImageContext(imageRrect.size);
-        [imageView.image drawInRect:CGRectMake(1,1,imageView.frame.size.width-2,imageView.frame.size.height-2)];
-        imageView.image = UIGraphicsGetImageFromCurrentImageContext();
-        UIGraphicsEndImageContext();
+        if ([view isKindOfClass:[UIImageView class]]) {
+            UIImageView *imageView = (UIImageView *)view;
+            CGRect imageRrect = CGRectMake(0, 0,view.frame.size.width, view.frame.size.height);
+            UIGraphicsBeginImageContext(imageRrect.size);
+            [imageView.image drawInRect:CGRectMake(1,1,view.frame.size.width-2,view.frame.size.height-2)];
+            imageView.image = UIGraphicsGetImageFromCurrentImageContext();
+            UIGraphicsEndImageContext();
+        }
+
         [CHProgressHUD sharedHUD].animation = animation;
-        [imageView.layer addAnimation: [CHProgressHUD sharedHUD].animation forKey:nil];
+        [view.layer addAnimation: [CHProgressHUD sharedHUD].animation forKey:nil];
     }
 
-    return imageView;
+    return view;
 }
 #pragma mark OverRide Setter
 + (void)setLabelColor:(UIColor *)labelColor{

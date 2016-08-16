@@ -3,8 +3,6 @@
     <dependencies>
         <deployment identifier="iOS"/>
         <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="10085"/>
-        <capability name="Constraints to layout margins" minToolsVersion="6.0"/>
-        <capability name="Constraints with non-1.0 multipliers" minToolsVersion="5.1"/>
     </dependencies>
     <scenes>
         <!--View Controller-->
@@ -19,56 +17,25 @@
                         <rect key="frame" x="0.0" y="0.0" width="600" height="600"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
-                            <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="gid-Ft-At9">
-                                <rect key="frame" x="0.0" y="300" width="600" height="300"/>
-                                <color key="backgroundColor" red="1" green="0.64313725489999995" blue="0.14117647059999999" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
-                            </view>
-                            <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="3Xm-R8-oAO">
-                                <rect key="frame" x="0.0" y="0.0" width="600" height="300"/>
-                                <color key="backgroundColor" red="1" green="0.64313725489999995" blue="0.14117647059999999" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
-                            </view>
-                            <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="ZMU-cQ-LqY">
-                                <rect key="frame" x="211" y="76" width="178" height="30"/>
-                                <constraints>
-                                    <constraint firstAttribute="width" constant="178" id="I1K-9E-kzL"/>
-                                    <constraint firstAttribute="height" constant="30" id="oJi-XV-5Tl"/>
-                                </constraints>
-                                <state key="normal" title="Show"/>
+                            <tableView clipsSubviews="YES" contentMode="scaleToFill" alwaysBounceVertical="YES" dataMode="prototypes" style="plain" separatorStyle="default" rowHeight="44" sectionHeaderHeight="28" sectionFooterHeight="28" translatesAutoresizingMaskIntoConstraints="NO" id="NpO-9z-cQo">
+                                <rect key="frame" x="0.0" y="20" width="600" height="580"/>
+                                <color key="backgroundColor" red="0.83529411760000005" green="0.83529411760000005" blue="0.83529411760000005" alpha="1" colorSpace="calibratedRGB"/>
                                 <connections>
-                                    <action selector="changed:" destination="BYZ-38-t0r" eventType="touchUpInside" id="Ec9-rk-iRR"/>
+                                    <outlet property="dataSource" destination="BYZ-38-t0r" id="2Mv-DH-9BK"/>
+                                    <outlet property="delegate" destination="BYZ-38-t0r" id="HX5-Hm-2Wi"/>
                                 </connections>
-                            </button>
-                            <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="gff-zk-Tb8">
-                                <rect key="frame" x="211" y="133" width="178" height="30"/>
-                                <constraints>
-                                    <constraint firstAttribute="width" constant="178" id="2EK-GQ-Q4I"/>
-                                    <constraint firstAttribute="height" constant="30" id="FU7-Ef-qcy"/>
-                                </constraints>
-                                <state key="normal" title="Show Custom"/>
-                                <connections>
-                                    <action selector="hide:" destination="BYZ-38-t0r" eventType="touchUpInside" id="xcA-He-LPE"/>
-                                </connections>
-                            </button>
+                            </tableView>
                         </subviews>
                         <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="calibratedWhite"/>
                         <constraints>
-                            <constraint firstItem="gid-Ft-At9" firstAttribute="height" secondItem="8bC-Xf-vdC" secondAttribute="height" multiplier="1:2" id="2U4-KG-hch"/>
-                            <constraint firstItem="3Xm-R8-oAO" firstAttribute="height" secondItem="8bC-Xf-vdC" secondAttribute="height" multiplier="1:2" id="9Ee-hA-JRA"/>
-                            <constraint firstItem="gff-zk-Tb8" firstAttribute="centerX" secondItem="8bC-Xf-vdC" secondAttribute="centerX" id="9pm-Ld-24B"/>
-                            <constraint firstItem="ZMU-cQ-LqY" firstAttribute="centerX" secondItem="8bC-Xf-vdC" secondAttribute="centerX" id="AcH-nZ-guC"/>
-                            <constraint firstAttribute="trailingMargin" secondItem="3Xm-R8-oAO" secondAttribute="trailing" constant="-20" id="BRb-G6-e7I"/>
-                            <constraint firstItem="gff-zk-Tb8" firstAttribute="top" secondItem="ZMU-cQ-LqY" secondAttribute="bottom" constant="27" id="GKA-Pq-KJg"/>
-                            <constraint firstItem="wfy-db-euE" firstAttribute="top" secondItem="gid-Ft-At9" secondAttribute="bottom" id="RNz-OH-dRz"/>
-                            <constraint firstAttribute="trailingMargin" secondItem="gid-Ft-At9" secondAttribute="trailing" constant="-20" id="ect-Jd-37s"/>
-                            <constraint firstItem="3Xm-R8-oAO" firstAttribute="leading" secondItem="8bC-Xf-vdC" secondAttribute="leadingMargin" constant="-20" id="nUJ-Nz-VkB"/>
-                            <constraint firstItem="gid-Ft-At9" firstAttribute="leading" secondItem="8bC-Xf-vdC" secondAttribute="leadingMargin" constant="-20" id="rCs-2b-iPZ"/>
-                            <constraint firstItem="3Xm-R8-oAO" firstAttribute="top" secondItem="8bC-Xf-vdC" secondAttribute="topMargin" id="sBq-NN-eLo"/>
-                            <constraint firstItem="ZMU-cQ-LqY" firstAttribute="top" secondItem="y3c-jy-aDJ" secondAttribute="bottom" constant="56" id="vZV-dh-vyK"/>
+                            <constraint firstItem="NpO-9z-cQo" firstAttribute="top" secondItem="8bC-Xf-vdC" secondAttribute="top" constant="20" id="QWM-uD-q7w"/>
+                            <constraint firstItem="NpO-9z-cQo" firstAttribute="leading" secondItem="8bC-Xf-vdC" secondAttribute="leading" id="czQ-MQ-xg7"/>
+                            <constraint firstAttribute="trailing" secondItem="NpO-9z-cQo" secondAttribute="trailing" id="g87-ed-EJ9"/>
+                            <constraint firstItem="wfy-db-euE" firstAttribute="top" secondItem="NpO-9z-cQo" secondAttribute="bottom" id="x1y-bh-zko"/>
                         </constraints>
                     </view>
                     <connections>
-                        <outlet property="bottomView" destination="gid-Ft-At9" id="RWE-Ee-o8K"/>
-                        <outlet property="topView" destination="3Xm-R8-oAO" id="hNI-Re-EkX"/>
+                        <outlet property="mainTable" destination="NpO-9z-cQo" id="Wc2-3b-LVM"/>
                     </connections>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="dkx-z0-nzr" sceneMemberID="firstResponder"/>

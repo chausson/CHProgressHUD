@@ -15,12 +15,13 @@
 
 typedef NS_ENUM(NSInteger, CHProgressHUDMode) {
     /** Progress is shown using an UIActivityIndicatorView. This is the default. */
-    CHProgressHUDModeActivityIndicator,
+    CHActivityIndicator,
     /** Shows a custom view */
-    CHProgressHUDModeCustomView,
+    CHCustomView,
+    CHRotateCustomView,
     /** Shows only labels */
-    CHProgressHUDModeActivityText, // 显示文本和菊花
-    CHProgressHUDModePlainText// 显示纯文本
+    CHActivityText, // 显示文本和菊花
+    CHPlainText// 显示纯文本
     
 };
 #if NS_BLOCKS_AVAILABLE

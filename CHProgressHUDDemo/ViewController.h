@@ -9,8 +9,8 @@
 #import <UIKit/UIKit.h>
 
 @interface ViewController : UIViewController
-@property (weak, nonatomic) IBOutlet UIView *topView;
-@property (weak, nonatomic) IBOutlet UIView *bottomView;
+
+@property (weak, nonatomic) IBOutlet UITableView *mainTable;
 
 
 @end
