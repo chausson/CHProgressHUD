@@ -18,7 +18,7 @@ sizeWithAttributes:@{NSFontAttributeName:font}] : CGSizeZero;
 #define CH_TEXTSIZE(text, font) [text length] > 0 ? [text sizeWithFont:font] : CGSizeZero;
 #endif
 //#if __IPHONE_OS_VERSION_MIN_REQUIRED >= 70000
-    #define CH_MULTILINE_TEXTSIZE(text, font, maxSize, mode) [text length] > 0 ? [text \
+    #define CH_MULTILINE_TEXTSIZE(text, font, maxSize) [text length] > 0 ? [text \
         boundingRectWithSize:maxSize options:(NSStringDrawingUsesLineFragmentOrigin) \
         attributes:@{NSFontAttributeName:font} context:nil].size : CGSizeZero;
 //#else
@@ -192,14 +192,14 @@ static const CGFloat kLabelFontSize = 14.f;
         if ([self  isNeedShowLabel]) {
             CGFloat remainingHeight = bounds.size.height - totalSize.height - kPadding - 4 * self.margin;
             CGSize maxSize = CGSizeMake(maxWidth, remainingHeight);
-            CGSize labelSize = CH_MULTILINE_TEXTSIZE(self.labelText, self.labelFont, maxSize, detailsLabel.lineBreakMode);
+            CGSize labelSize = CH_MULTILINE_TEXTSIZE(self.labelText, self.labelFont, maxSize);
             CGRect labelF;
             CGFloat labelY;
             
             labelF.origin.x = round((bounds.size.width - labelSize.width) / 2) + xPos;
             labelF.size = labelSize;
             if(self.mode == CHPlainText){
-                labelY = self.center.y;
+                labelY = self.center.y-labelSize.height/2+2*kPadding;
                 totalSize.height = labelSize.height +2*kPadding;
             }else{
                 labelY = CGRectGetMaxY(self.indicator.frame)+kPadding;
@@ -207,7 +207,7 @@ static const CGFloat kLabelFontSize = 14.f;
             
             labelF.origin.y = labelY;
             label.frame = labelF;
-            _yOffset = labelF.size.height+kPadding;
+            _yOffset = kPadding*4;
             _xOffset = labelF.size.width-totalSize.width+kPadding*8;
             
             totalSize.width += _xOffset;

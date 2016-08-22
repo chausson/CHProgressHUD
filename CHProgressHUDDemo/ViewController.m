@@ -37,6 +37,7 @@ static NSArray *data;
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath{
     switch (indexPath.row) {
         case 0:
+            
             [CHProgressHUD  show:YES];
             [CHProgressHUD hide:YES afterDelay:3.0f completionBlock:^{
                 NSLog(@"image dismiss after 3.0");
@@ -53,7 +54,7 @@ static NSArray *data;
             }];
         }break;
         case 2:
-            [CHProgressHUD setLabelText:@"网络不好检查下网络连接"];
+            [CHProgressHUD setLabelText:@"网络不好检查下网络连接,网络不好检查下网络连接,网络不好检查下网络连接"];
             [CHProgressHUD setMode:CHPlainText];
             [CHProgressHUD show:YES];
             break;
