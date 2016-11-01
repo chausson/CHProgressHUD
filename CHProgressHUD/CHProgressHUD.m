@@ -407,9 +407,13 @@ static const CGFloat kLabelFontSize = 14.f;
     [[CHProgressHUD sharedHUD] show:animated insertView:nil];
 }
 + (void)showPlainText:(NSString *)text{
-    [[CHProgressHUD sharedHUD] setMode:CHPlainText];
-    [[CHProgressHUD sharedHUD] setLabelText:text];
-    [[CHProgressHUD sharedHUD] show:YES insertView:nil];
+    if (text.length > 0) {
+        [[CHProgressHUD sharedHUD] setMode:CHPlainText];
+        [[CHProgressHUD sharedHUD] setLabelText:text];
+        [[CHProgressHUD sharedHUD] show:YES insertView:nil];
+    }else{
+        NSLog(@"%s%d该方法需要输入至少一个文字",__PRETTY_FUNCTION__,__LINE__);
+    }
 }
 - (void)show:(BOOL)animated insertView:(UIView *)view{
     self.showStarted = [NSDate date];
